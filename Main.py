@@ -6,6 +6,7 @@ from Case import Case, Map
 from SidePanel import SidePanel
 pygtk.require('2.0')
 import gtk
+from Player import Player
 
 
 
@@ -15,6 +16,9 @@ import gtk
 
 class DrawingAreaExample:
     def __init__(self):
+        self.player = {}
+        self.player['Player 1'] = Player('Player 1', 'blue')
+        self.player['Player 2'] = Player('Player 2', 'yellow')
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_title("Drawing Area Example")
         window.connect("destroy", gtk.main_quit)
