@@ -10,7 +10,15 @@ import random
 
 STANDARD_SIZE = 40
 
+KEY_LEFT = 65361
+KEY_UP = 65362
+KEY_RIGHT= 65363
+KEY_DOWN = 65364
+
 class CaseElement():
+
+    level = 5
+
     def get_info(self):
         pass
 
@@ -23,10 +31,17 @@ class CaseElement():
     def set_player(self, player):
         pass
 
-    def get_level(self):
-        return 5
+    def get_buttons(self):
+        """
+            return (title, buttons)
+                where title will be the title of the frame and buttons the list of buttons specific to this case
+        """
+        return False
 
 class City(CaseElement):
+
+    level = 2
+
     def __init__(self, parent, name, inhabitant=100):
         self.parent = parent
         self.name = name
@@ -61,8 +76,17 @@ class City(CaseElement):
     def get_info(self):
         return "%s : %s (%s Citizen)" % (self.player and self.player.name or "Barbarian", self.name, self.inhabitant)
 
-    def get_level(self):
-        return 2
+
+    def get_buttons(self):
+        create_unit = gtk.Button("Recruite")
+        create_unit.connect("clicked", self.__callback_recruit)
+        build =  gtk.Button("Build")
+        return ('City', [create_unit, build])
+
+
+
+    def __callback_recruit(self, widget):
+        print "recruitement", self.player.name
 
 class Case():
 
@@ -83,11 +107,6 @@ class Case():
         for element in self.case_elements.values():
             element.draw(drawable, gc)
 
-    def set_player(self, player):
-        for level, element in self.case_elements.iteritems():
-            element.set_player(player)
-
-
 
     def button_pressed(self):
         self.pressed = True
@@ -98,7 +117,7 @@ class Case():
 
     def add_city(self, name):
         city = City(self, name)
-        self.case_elements[city.get_level()] = city
+        self.case_elements[city.level] = city
 
     def get_info(self):
         info = ""
@@ -110,6 +129,12 @@ class Case():
         else:
             return info
 
+    def get_buttons_frames(self):
+        info = []
+        for element in self.case_elements.values():
+            info.append(element.get_buttons())
+        return info
+
     def next_turn(self):
         for element in self.case_elements.values():
             element.next_turn()
@@ -120,12 +145,17 @@ class Case():
 
 
 class Map():
+
+
+
     def __init__(self, parent, size, reso=20, city_nb=0):
         self.parent = parent
+        self.city_range = 2
         self.map = {}
         self.reso = reso
         self.size = size
-        city_nb = city_nb or self.size[0] * self.size[1] / 30
+        city_nb = city_nb or self.size[0] * self.size[1] / ( (self.city_range +2)**2 + 5)
+        print (self.city_range * 2 +1)**2
         for i in xrange(0, size[0]):
             for j in xrange(0, size[1]):
                 self.map[(i,j)] = Case(self, (i, j), self.reso)
@@ -135,12 +165,12 @@ class Map():
     def _init_city(self, city_nb):
         def check_coordo(coordo):
             area = []
-            for i in [-2,-1,0,1,2]:
-                for j in [-2,-1,0,1,2]:
+            for i in range(-self.city_range, self.city_range + 1):
+                for j in range(-self.city_range, self.city_range + 1):
                     area.append((coordo[0] + i, coordo[1] + j))
             return any([c in done_coordo for c in area])
 
-        if city_nb > self.size[0] * self.size[1] / 25:
+        if city_nb > self.size[0] * self.size[1] / (self.city_range +2)**2:
             raise Exception("Too much city")
         done_coordo = []
         for i in xrange(0, city_nb):
@@ -167,7 +197,14 @@ class Map():
             self.map[x,y].button_pressed()
             #self.map[x,y].set_player(self.parent.player['Player 1'])
             self.parent.side_panel.set_case_info(self.map[x,y].get_info())
+            self.parent.side_panel.reset_command_button()
+            for title, buttons in self.map[x,y].get_buttons_frames():
+                self.parent.side_panel.display_command_button(title, buttons)
             self.pressed = (x,y)
+
+    def key_pressed(self, widget, event):
+        print event.keyval
+
 
     def next_turn(self):
         for case in self.map.values():

@@ -42,6 +42,7 @@ class Game:
         if self.map:
             self.map.button_pressed(event.x, event.y)
         widget.queue_draw()
+        widget.grab_focus()
 
     def push_new(self, widget):
         config_player.ConfigPlayer(self.interface, self)
@@ -54,14 +55,17 @@ class Game:
         self.map = Map(self, map_size, case_size)
         self.side_panel.refresh_turn()
         self.area = gtk.DrawingArea()
+        self.area.set_flags(gtk.CAN_FOCUS)
         self.area.set_size_request(map_size[0] * case_size, map_size[1] * case_size)
         self.area.connect("expose-event", self.expose_handler)
         self.area.connect("button_press_event", self.button_press_event)
+        self.area.connect("key_press_event", self.map.key_pressed)
         self.area.set_events(gtk.gdk.EXPOSURE_MASK
                              | gtk.gdk.LEAVE_NOTIFY_MASK
                              | gtk.gdk.BUTTON_PRESS_MASK
                              | gtk.gdk.POINTER_MOTION_MASK
-                             | gtk.gdk.POINTER_MOTION_HINT_MASK)
+                             | gtk.gdk.POINTER_MOTION_HINT_MASK
+                             | gtk.gdk.KEY_PRESS_MASK)
         scroll_panel = self.interface.get_object('scrolledwindow1')
         scroll_panel.add_with_viewport(self.area)
         self.window.queue_draw()
@@ -76,7 +80,7 @@ class Game:
         self.map.next_turn() # if current player = 0 then next turn of the case
         self.current_player = (self.current_player + 1) % len(self.players)
         self.side_panel.refresh_turn()
-        print self.current_player
+
 
 if __name__ == "__main__":
     Game()
