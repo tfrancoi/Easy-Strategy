@@ -51,7 +51,8 @@ class SidePanel(gtk.VBox):
         self.game.window.show_all()
 
     def display_command_button(self, title, buttons):
-        print "display command button"
+        if not title:
+            return
         frame = gtk.Frame(title)
         bbox = gtk.HButtonBox()
 
